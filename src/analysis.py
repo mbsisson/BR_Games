@@ -8,7 +8,7 @@
 import numpy as np
 #import matplotlib.pyplot as plt
 #from scipy.stats import truncnorm
-from optimizer import sampleTrajectories_Blue
+from reinforce import sampleTrajectories_Blue
 
 
 def evaluate_policy(log, T, thetaBlue, thetaRed, hitOdds, delta=0.0, n_samples=500, loud=True):

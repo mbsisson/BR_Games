@@ -49,7 +49,6 @@
 # Blue reward: 1 if Blue shipment is not hit by Red, 0 otherwise
 # Red reward: 1 if Red hits Blue shipment, 0 otherwise
 
-from enum import Enum
 import numpy as np
 import random
 
@@ -69,8 +68,30 @@ choose_to_stay = lambda pr, d: with_probability(random.uniform(max(0, pr - d), m
 # Determines if Red's strike attempt is successful give the current route and Red's hit odds on said route
 red_hits = lambda route, odds: random.random() < odds[route]
 
+# Swtich routes
+other_route = lambda route: 1 - route
+
 # Prevents division by zero
 safe_inverse = lambda x: 1 / (x + 1e-6)
+
+
+def observe_initial_state(hitOdds):
+    ''''''
+    locBlue = routeI if with_probability(0.5) else routeII
+    # if Bq1 >= Bq2:
+    #     location[0, Blue] = routeI if with_probability(Bq1) else routeII
+    # else:
+    #     location[0, Blue] = routeII if with_probability(Bq2) else routeI
+    locRed = routeI if hitOdds[routeI] < hitOdds[routeII] else routeII
+    return locBlue, locRed
+
+
+def transition(state, actionBlue, actionRed, delta):
+    ''''''
+    locBlue = state[Blue] if choose_to_stay(actionBlue, delta) else other_route(state[Blue])
+    locRed = state[Red] if choose_to_stay(actionRed, delta) else other_route(state[Red])
+    reward = 1 if locBlue != locRed else 0
+    return locBlue, locRed, reward
 
 
 def play_game(T, thetaBlue, thetaRed, hitOdds, delta=0):
@@ -102,12 +123,7 @@ def play_game(T, thetaBlue, thetaRed, hitOdds, delta=0):
     reward = np.zeros(T, dtype=int)  # Whether Blue shipment gets through in each period t
 
     # Determine Blue and Red starting locations
-    location[0, Blue] = routeI if with_probability(0.5) else routeII
-    # if Bq1 >= Bq2:
-    #     location[0, Blue] = routeI if with_probability(Bq1) else routeII
-    # else:
-    #     location[0, Blue] = routeII if with_probability(Bq2) else routeI
-    location[0, Red] = routeI if hitOdds[routeI] < hitOdds[routeII] else routeII
+    location[0, Blue], location[0, Red] = observe_initial_state(hitOdds)
 
     # Compute reward for period 0
     if location[0, Blue] == location[0, Red]:

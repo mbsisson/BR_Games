@@ -12,7 +12,7 @@ from datetime import datetime
 from logger import danoLogger
 from reader import readConfigFile
 from analysis import evaluate_policy
-from optimizer import state_version, optimize_policy, arrayToString, pureFirstOrder, adam
+from reinforce import state_version, optimize_policy, arrayToString, pureFirstOrder, adam
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # Parameters for the optimization methods
     params = {}
     params["n_samples"] = 250
-    params["learning_rate"] = 0.0005
+    params["learning_rate"] = 0.005
     params["beta1"] = 0.9
     params["beta2"] = 0.999
     params["eta"] = 0.01
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     log.joint("initial Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
     log.joint("fixed Red policy: %s\n"%", ".join(map(str, thetaRed)))
     thetaBlue_star = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-                                     max_iter=500, loud=True, verbose=False)
+                                     max_iter=1000, loud=True, verbose=True)
     evaluate_policy(log, T, thetaBlue_star, thetaRed, hitOdds, delta)
     log.joint("\n")
 
@@ -110,25 +110,25 @@ if __name__ == "__main__":
     log.joint("initial Red policy: %s\n"%", ".join(map(str, thetaRed)))
     log.joint("fixed Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
     thetaRed_star = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta, 
-                                    max_iter=500, loud=True, verbose=False)
+                                    max_iter=1000, loud=True, verbose=True)
     evaluate_policy(log, T, thetaBlue, thetaRed_star, hitOdds, delta)
     log.joint("\n")
 
     # Optimize Blue and Red simultaneously
-    step_count = 2  # Number of first-order steps each player can take during their training turn
-    epoch_count = 500
-    thetaBlue_hat, thetaRed_hat = np.zeros(len(thetaBlue)), np.zeros(len(thetaBlue))
-    np.copyto(thetaBlue_hat, thetaBlue)
-    np.copyto(thetaRed_hat, thetaRed)
-    log.joint("Optimizing Blue and Red policies in tanget\n")
-    log.joint(f"each gets {step_count} steps per round, {epoch_count} rounds total\n")
-    log.joint("Initial policies:  ThetaBlue=%s  ThetaRed%s\n"%(arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
-    for epoch in range(1, epoch_count+1):
-        thetaBlue_hat = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-                                        max_iter=step_count, loud=False, verbose=False)
-        thetaRed_hat = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-                                        max_iter=step_count, loud=False, verbose=False)
+    # step_count = 2  # Number of first-order steps each player can take during their training turn
+    # epoch_count = 500
+    # thetaBlue_hat, thetaRed_hat = np.zeros(len(thetaBlue)), np.zeros(len(thetaBlue))
+    # np.copyto(thetaBlue_hat, thetaBlue)
+    # np.copyto(thetaRed_hat, thetaRed)
+    # log.joint("Optimizing Blue and Red policies in tanget\n")
+    # log.joint(f"each gets {step_count} steps per round, {epoch_count} rounds total\n")
+    # log.joint("Initial policies:  ThetaBlue=%s  ThetaRed%s\n"%(arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
+    # for epoch in range(1, epoch_count+1):
+    #     thetaBlue_hat = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+    #                                     max_iter=step_count, loud=False, verbose=False)
+    #     thetaRed_hat = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+    #                                     max_iter=step_count, loud=False, verbose=False)
 
-        if epoch % 10 == 0:
-            log.joint("After round %d:  ThetaBlue=(%s)  ThetaRed=(%s)\n"%(epoch, arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
-            evaluate_policy(log, T, thetaBlue_hat, thetaRed_hat, hitOdds, delta)
+    #     if epoch % 10 == 0:
+    #         log.joint("After round %d:  ThetaBlue=(%s)  ThetaRed=(%s)\n"%(epoch, arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
+    #         evaluate_policy(log, T, thetaBlue_hat, thetaRed_hat, hitOdds, delta)
