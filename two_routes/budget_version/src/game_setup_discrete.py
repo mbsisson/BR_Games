@@ -1,10 +1,12 @@
+# Sun.Oct.18.191200.2025@jasper
 import random
 import numpy as np
 
 Blue, Red = 0, 1
 routeI, routeII = 0, 1
-location_space = [[routeI, routeI], [routeI, routeII], [routeII, routeI], [routeII, routeII]]
-n_gridpts = 21
+locationSpace = [[routeI, routeI], [routeI, routeII], [routeII, routeI], [routeII, routeII]]
+n_locations = len(locationSpace)
+n_gridpts = 6
 probability_space = np.linspace(0, 1, n_gridpts)
 
 # Samples Bernoulli random variable with parameter pr
@@ -14,30 +16,24 @@ with_probability = lambda pr: random.random() < pr
 other_route = lambda route: 1 - route
 
 def getStateIndex(locations, Bsupply, Rbudget):
-    Bstate_idx = Bsupply * len(location_space) + location_space.index(locations)
-    Rstate_idx = Rbudget * len(location_space) + location_space.index(locations)
+    Bstate_idx = Bsupply * n_locations + locationSpace.index(locations)
+    Rstate_idx = Rbudget * n_locations + locationSpace.index(locations)
     return Bstate_idx, Rstate_idx
 
-def getStateFromIndex(Bstate_idx, Rstate_idx):
-    Bsupply = Bstate_idx // len(location_space)
-    Rbudget = Rstate_idx // len(location_space)
-    locations = location_space[Bstate_idx - (Bsupply * len(location_space))]
-    return locations, Bsupply, Rbudget
-
 def getBactionIndex(Bship, Bpr):
-    return n_gridpts * Bship + probability_space.index(Bpr)
+    return Bship * n_gridpts + probability_space.index(Bpr)
 
 def getBactionFromIndex(idx):
     Bship = idx // n_gridpts
-    Bpr = probability_space[idx - (Bship * n_gridpts)]
+    Bpr = probability_space[idx % n_gridpts]
     return Bship, Bpr
 
 def getRactionIndex(Rstrike, Rpr):
-    return n_gridpts * Rstrike + probability_space.index(Rpr)
+    return Rstrike * n_gridpts + probability_space.index(Rpr)
 
 def getRactionFromIndex(idx):
     Rstrike = idx // n_gridpts
-    Rpr = probability_space[idx - (Rstrike * n_gridpts)]
+    Rpr = probability_space[idx % n_gridpts]
     return Rstrike, Rpr
 
 def transition(locations, Bsupply, Rbudget,  # State
@@ -50,12 +46,12 @@ def transition(locations, Bsupply, Rbudget,  # State
         # R strikes
         if with_probability(hitOdds[Rloc]):
             # Red hits Blue shipment
-            Breward = -0.5 * Bship
+            Breward = 0
             Rreward = Bship
         else:
             # Red misses Blue shipment
             Breward = Bship
-            Rreward = -0.1
+            Rreward = 0
 
         # Decrement R budget
         Rbudget_new = Rbudget - Rstrike
@@ -76,7 +72,7 @@ def sampleGivenQvalues(log, loud, Qb, Qr, T, Bsupply_initial, Rbudget_initial, h
     B_totalrewards = 0
     R_totalrewards = 0
     
-    locations = random.choice(location_space)
+    locations = random.choice(locationSpace)
     Bsupply = Bsupply_initial
     Rbudget = Rbudget_initial
     for t in range(T):

@@ -69,3 +69,17 @@ def myshownparray(log, array, arraylen, arrayname):
             log.joint("\n")
             k = 0
     if k>0: log.joint("\n")
+
+def myshownpmatrix(log, matrix, n_rows, n_cols, arrayname):
+    log.joint("%s: \n" %(arrayname))
+
+    for row in range(n_rows):
+        array = matrix[row]
+        k = 0
+        for h in range(n_cols):
+            log.joint('%.3e ' %(array[h]))
+            k += 1
+            if k == 10:
+                log.joint("\n")
+                k = 0
+        if k>0: log.joint("\n")
