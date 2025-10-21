@@ -75,6 +75,7 @@ def sampleGivenQvalues(log, loud, Qb, Qr, T, Bsupply_initial, Rbudget_initial, h
     locations = random.choice(locationSpace)
     Bsupply = Bsupply_initial
     Rbudget = Rbudget_initial
+
     for t in range(T):
         BstateIdx, RstateIdx = getStateIndex(locations, Bsupply, Rbudget)
 
@@ -91,7 +92,7 @@ def sampleGivenQvalues(log, loud, Qb, Qr, T, Bsupply_initial, Rbudget_initial, h
         
         if loud:
             log.joint("t={}\n".format(t))
-            log.joint("  (Bloc, Rloc) = ({}, {})\n".format(locations_new[Blue], locations_new[Red]))
+            log.joint("  (Bloc, Rloc) = ({}, {})\n".format(locations[Blue], locations[Red]))
             log.joint("  Blue supply = {}\n".format(Bsupply))
             log.joint("  Red budget = {}\n".format(Rbudget))
             log.joint("  Blue ships {} units on current route w.p. {}\n".format(Bship, Bpr))
@@ -107,6 +108,9 @@ def sampleGivenQvalues(log, loud, Qb, Qr, T, Bsupply_initial, Rbudget_initial, h
         Bsupply = Bsupply_new
         Rbudget = Rbudget_new
 
-    log.joint("Number of deliveries: {}\n".format(n_deliveries))
-    log.joint("Total Blue rewards: {}\n".format(B_totalrewards))
-    log.joint("Total Red rewards: {}\n".format(R_totalrewards))
+    if loud:
+        log.joint("Number of deliveries: {}\n".format(n_deliveries))
+        log.joint("Total Blue rewards: {}\n".format(B_totalrewards))
+        log.joint("Total Red rewards: {}\n".format(R_totalrewards))
+
+    return n_deliveries

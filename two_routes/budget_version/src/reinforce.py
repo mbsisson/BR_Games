@@ -6,7 +6,7 @@ from game_setup_discrete import *
 
 def state_version(log):
     '''State the current version of the BRgames/two_routes/budget_version code.'''
-    log.joint('Version: <2025.10.18.202000@jasper>\n\n')
+    log.joint('Version: <2025.10.21.183700@jasper>\n\n')
 
 def QLearn_two(log, T, Bsupply_initial, Rbudget_initial, hitOdds, gamma, eps=.05, learn_rate=.05, training_episodes=10000, loud=False):
     log.joint("Running Q-learning for two agents...\n")

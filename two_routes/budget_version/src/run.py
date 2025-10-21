@@ -57,7 +57,13 @@ if __name__ == "__main__":
     myshownpmatrix(log, Qb, Qb.shape[0], Qb.shape[1], "Qb")
     myshownpmatrix(log, Qr, Qr.shape[0], Qr.shape[1], "Qr")
 
+    total_deliveries = 0
     n_games = 10
     for game in range(n_games):
         log.joint("Game %d\n"%(game))
-        sampleGivenQvalues(log, True, Qb, Qr, T, supply, budget, hitOdds)
+        deliveries = sampleGivenQvalues(log, True, Qb, Qr, T, supply, budget, hitOdds)
+        log.joint("\n")
+        #log.joint("%.4f \n"%(deliveries))
+        total_deliveries += deliveries
+
+    log.joint("Average deliveries %.4f"%(total_deliveries / n_games))
