@@ -12,14 +12,14 @@ from sampler import sampleTrajectories_Blue, sampleTrajectories_Red
 
 def state_version(log):
     '''State the current version of the BRgames code.'''
-    log.joint('Version: <2025.10.10.104200@jasper>\n\n')
+    log.joint('Version: <2025.10.22.095100@jasper>\n\n')
 
 
 # Display functions
 arrayToString = lambda theta: ", ".join(f"{x:.4f}" for x in theta)
 
 # Projects theta (if necessary) to ensure it is in the range [0,1]
-project_theta = lambda theta: np.clip(theta, 0.001, 0.999)
+project_theta = lambda theta: np.clip(theta, 0.05, 0.95)
 
 
 def policy_gradient(traj_sampler, gradLogProb_func, thetaVariable, T, thetaParameter, hitOdds, delta=0.0, n_samples=1000):
@@ -103,11 +103,11 @@ def pureFirstOrder(log, traj_sampler, gradLogPolicy_func, params, thetaVariable_
         gradTheta = policy_gradient(traj_sampler, gradLogPolicy_func, theta, T, thetaParameter, hitOdds, delta, n_samples)
 
         # Converge if projected gradient is smaller than tolerance
-        projected_grad = theta - project_theta(theta + gradTheta)
+        projected_grad = project_theta(theta + gradTheta) - theta
         if np.linalg.norm(projected_grad, np.inf) < tol:
             break
 
-        if verbose: log.joint("Iteration %d,  theta=%s  gradient=%s\n"%(k, arrayToString(theta), arrayToString(projected_grad)))
+        if verbose: log.joint("Iteration %d,  theta=%s  gradient=%s\n"%(k, arrayToString(theta), arrayToString(gradTheta)))
 
     return theta, k
 
@@ -143,12 +143,12 @@ def adam(log, traj_sampler, gradLogPolicy_func, params, thetaVariable_initial, T
         gradTheta = policy_gradient(traj_sampler, gradLogPolicy_func, theta, T, thetaParameter, hitOdds, delta, n_samples)
 
         # Converge if projected gradient is smaller than tolerance
-        projected_grad = theta - project_theta(theta + gradTheta)
+        projected_grad = project_theta(theta + gradTheta) - theta
         if np.linalg.norm(projected_grad, np.inf) < tol:
             break
 
         if verbose: log.joint("Iteration %d,  theta=%s,  gradient=%s,  prevStepLen=%f\n"%(k, arrayToString(theta), 
-                                                                                          arrayToString(projected_grad), 
+                                                                                          arrayToString(gradTheta), 
                                                                                           np.linalg.norm(step)))
 
     return theta, k

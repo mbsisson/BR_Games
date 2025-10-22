@@ -62,11 +62,12 @@ if __name__ == "__main__":
 
     # The optimization method to use
     optMethod = pureFirstOrder
+    maxiters = 500
 
     # Parameters for the optimization methods
     params = {}
     params["n_samples"] = 250
-    params["learning_rate"] = 0.005
+    params["learning_rate"] = 0.01
     params["beta1"] = 0.9
     params["beta2"] = 0.999
     params["eta"] = 0.01
@@ -101,18 +102,20 @@ if __name__ == "__main__":
     log.joint("initial Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
     log.joint("fixed Red policy: %s\n"%", ".join(map(str, thetaRed)))
     thetaBlue_star = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-                                     max_iter=1000, loud=True, verbose=True)
+                                     max_iter=maxiters, loud=True, verbose=True)
     evaluate_policy(log, T, thetaBlue_star, thetaRed, hitOdds, delta)
     log.joint("\n")
 
     # Optimize Red policy on initial Blue policy
+    '''
     log.joint("Optimizing Red policy\n")
     log.joint("initial Red policy: %s\n"%", ".join(map(str, thetaRed)))
     log.joint("fixed Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
     thetaRed_star = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta, 
-                                    max_iter=1000, loud=True, verbose=True)
+                                    max_iter=maxiters, loud=True, verbose=True)
     evaluate_policy(log, T, thetaBlue, thetaRed_star, hitOdds, delta)
     log.joint("\n")
+    '''
 
     # Optimize Blue and Red simultaneously
     # step_count = 2  # Number of first-order steps each player can take during their training turn

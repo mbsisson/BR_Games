@@ -127,7 +127,7 @@ def play_game(T, thetaBlue, thetaRed, hitOdds, delta=0):
 
     # Compute reward for period 0
     if location[0, Blue] == location[0, Red]:
-        # Blue starts on route same route as Red, so Red attempts to strike
+        # Blue starts on same route as Red, so Red attempts to strike
         r = 0 if red_hits(location[0, Red], hitOdds) else 1
     else:
         # Blue does not start on same route as Red
@@ -184,31 +184,30 @@ def gradLogPolicy_Blue(theta, location, t):
 
     # First period has no theta dependence
     if t == 0:
-        return np.zeros(dim, dtype=float)
+        return np.zeros(dim)
     
-    Bp1, Bp2 = theta[0], theta[2]
-    Bq1, Bq2= theta[1], theta[3]
+    Bp1, Bq1, Bp2, Bq2 = theta[0], theta[1], theta[2], theta[3]
 
     # Action is whether Blue switched routes this period
-    action = location[t, Blue] != location[t-1, Blue]
+    switch = location[t, Blue] != location[t-1, Blue]
 
-    gradLogPolicy = np.zeros(dim, dtype=float)
+    gradLogPolicy = np.zeros(dim)
     if location[t-1, Blue] == routeI:
         # Blue was on route I
         if location[t-1, Red] == routeI:
             # Red was also on route I, scenario 1a
-            gradLogPolicy[0] = safe_inverse(Bp1) if not action else safe_inverse(1 - Bp1)
+            gradLogPolicy[0] = safe_inverse(Bp1) if not switch else safe_inverse(1 - Bp1)
         else:
             # Red was on route II, scenario 1b
-            gradLogPolicy[1] = safe_inverse(Bq1) if not action else safe_inverse(1 - Bq1)
+            gradLogPolicy[1] = safe_inverse(Bq1) if not switch else safe_inverse(1 - Bq1)
     else:
         # Blue was on route II
         if location[t-1, Red] == routeII:
             # Red was also on route II, scenario 2a
-            gradLogPolicy[2] = safe_inverse(Bp2) if not action else safe_inverse(1 - Bp2)
+            gradLogPolicy[2] = safe_inverse(Bp2) if not switch else safe_inverse(1 - Bp2)
         else:
             # Red was on route I, scenario 2b
-            gradLogPolicy[3] = safe_inverse(Bq2) if not action else safe_inverse(1 - Bq2)
+            gradLogPolicy[3] = safe_inverse(Bq2) if not switch else safe_inverse(1 - Bq2)
 
     return gradLogPolicy
 
@@ -233,28 +232,27 @@ def gradLogPolicy_Red(theta, location, t):
     if t == 0:
         return np.zeros(dim, dtype=float)
     
-    Rp1, Rp2 = theta[0], theta[2]
-    Rq1, Rq2= theta[1], theta[3]
+    Rp1, Rq1, Rp2, Rq2 = theta[0], theta[1], theta[2], theta[3]
 
     # Action is whether Red switched routes this period
-    action = location[t, Red] != location[t-1, Red]
+    switch = location[t, Red] != location[t-1, Red]
 
     gradLogPolicy = np.zeros(dim, dtype=float)
     if location[t-1, Blue] == routeI:
         # Blue was on route I
         if location[t-1, Red] == routeI:
             # Red was also on route I, scenario 1a
-            gradLogPolicy[0] = safe_inverse(Rp1) if not action else safe_inverse(1 - Rp1)
+            gradLogPolicy[0] = safe_inverse(Rp1) if not switch else safe_inverse(1 - Rp1)
         else:
             # Red was on route II, scenario 1b
-            gradLogPolicy[3] = safe_inverse(Rq2) if not action else safe_inverse(1 - Rq2)
+            gradLogPolicy[3] = safe_inverse(Rq2) if not switch else safe_inverse(1 - Rq2)
     else:
         # Blue was on route II
         if location[t-1, Red] == routeII:
             # Red was also on route II, scenario 2a
-            gradLogPolicy[2] = safe_inverse(Rp2) if not action else safe_inverse(1 - Rp2)
+            gradLogPolicy[2] = safe_inverse(Rp2) if not switch else safe_inverse(1 - Rp2)
         else:
             # Red was on route I, scenario 2b
-            gradLogPolicy[1] = safe_inverse(Rq1) if not action else safe_inverse(1 - Rq1)
+            gradLogPolicy[1] = safe_inverse(Rq1) if not switch else safe_inverse(1 - Rq1)
 
     return gradLogPolicy
