@@ -6,7 +6,7 @@
 ###############################################################################
 
 import numpy as np
-from two_asymmetric_routes import play_game
+from two_asymmetric_routesV2 import play_game
 
 def sample_trajectory(T, thetaBlue, thetaRed, hitOdds, delta=0.0):
     return play_game(T, thetaBlue, thetaRed, hitOdds, delta)

@@ -6,8 +6,9 @@
 ###############################################################################
 
 import numpy as np
-from two_asymmetric_routes import gradLogPolicy_Blue, gradLogPolicy_Red
+from two_asymmetric_routesV2 import gradLogPolicy_Blue, gradLogPolicy_Red
 from sampler import sampleTrajectories_Blue, sampleTrajectories_Red
+#import matplotlib.pyplot as plt  # for plotting
 
 
 def state_version(log):
@@ -94,6 +95,10 @@ def pureFirstOrder(log, traj_sampler, gradLogPolicy_func, params, thetaVariable_
     tol = params["tol"]
     learning_rate = params["learning_rate"]
 
+    # For plotting
+    #theta_history = []
+    #theta_history.append(thetaVariable_initial)
+
     theta = thetaVariable_initial
     gradTheta = policy_gradient(traj_sampler, gradLogPolicy_func, theta, T, thetaParameter, hitOdds, delta, n_samples)
 
@@ -101,6 +106,7 @@ def pureFirstOrder(log, traj_sampler, gradLogPolicy_func, params, thetaVariable_
         step = learning_rate * gradTheta
         theta = project_theta(theta + step)
         gradTheta = policy_gradient(traj_sampler, gradLogPolicy_func, theta, T, thetaParameter, hitOdds, delta, n_samples)
+        #theta_history.append(theta)  # For plotting
 
         # Converge if projected gradient is smaller than tolerance
         projected_grad = project_theta(theta + gradTheta) - theta
@@ -108,6 +114,20 @@ def pureFirstOrder(log, traj_sampler, gradLogPolicy_func, params, thetaVariable_
             break
 
         if verbose: log.joint("Iteration %d,  theta=%s  gradient=%s\n"%(k, arrayToString(theta), arrayToString(gradTheta)))
+
+    # Plot theta over time
+    '''
+    thetaHistory = np.vstack(theta_history)
+    plt.plot(thetaHistory[:, 0], label='p1')
+    plt.plot(thetaHistory[:, 1], label='q1')
+    plt.plot(thetaHistory[:, 2], label='p2')
+    plt.plot(thetaHistory[:, 3], label='q2')
+    plt.xlabel("Iterations")
+    plt.ylabel("Probability")
+    plt.title("Policy over time")
+    plt.legend()
+    plt.show()
+    '''
 
     return theta, k
 

@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime
 from logger import danoLogger
 from reader import readConfigFile
-from analysis import evaluate_policy
+from analysis import evaluate_policy, compute_VaR
 from reinforce import state_version, optimize_policy, arrayToString, pureFirstOrder, adam
 
 if __name__ == "__main__":
@@ -61,8 +61,9 @@ if __name__ == "__main__":
         sys.exit()
 
     # The optimization method to use
-    optMethod = pureFirstOrder
-    maxiters = 500
+    optMethod1 = pureFirstOrder
+    optMethod2 = adam
+    maxiters = 1000
 
     # Parameters for the optimization methods
     params = {}
@@ -76,7 +77,7 @@ if __name__ == "__main__":
 
     # Record optimization settings
     log.joint("Optimization settings:\n")
-    log.joint("  method %s\n"%optMethod.__name__)
+    #log.joint("  method %s\n"%optMethod.__name__)
     for x in [("n_samples", params["n_samples"]),
               ("tol", params["tol"]),
               ("learning_rate", params["learning_rate"]),
@@ -94,44 +95,114 @@ if __name__ == "__main__":
     # log.joint("  rewards: %s\n"%(", ".join(map(str, rewards))))
 
     # Evaluate current Blue policy given Red policy
-    evaluate_policy(log, T, thetaBlue, thetaRed, hitOdds, delta)
+    evaluate_policy(log, T, thetaBlue, thetaRed, hitOdds, delta, loud=True)
     log.joint("\n")
 
-    # Optimize Blue policy on initial Red policy
-    log.joint("Optimizing Blue policy\n")
-    log.joint("initial Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
-    log.joint("fixed Red policy: %s\n"%", ".join(map(str, thetaRed)))
-    thetaBlue_star = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-                                     max_iter=maxiters, loud=True, verbose=True)
-    evaluate_policy(log, T, thetaBlue_star, thetaRed, hitOdds, delta)
-    log.joint("\n")
+    # Number of trials to run (multi-starting)
+    n_trials = 1
+    
+    # Confidence level for VaR computation
+    alpha = 0.05
 
-    # Optimize Red policy on initial Blue policy
-    '''
-    log.joint("Optimizing Red policy\n")
-    log.joint("initial Red policy: %s\n"%", ".join(map(str, thetaRed)))
-    log.joint("fixed Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
-    thetaRed_star = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta, 
-                                    max_iter=maxiters, loud=True, verbose=True)
-    evaluate_policy(log, T, thetaBlue, thetaRed_star, hitOdds, delta)
-    log.joint("\n")
-    '''
+    # # Optimize Blue policy on initial Red policy
+    # log.joint("Optimizing Blue policy using %s\n"%optMethod.__name__)
+    # for trial in range(1, n_trials+1):
+    #     log.joint("Trial %d\n"%trial)
+    #     log.joint("initial Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
+    #     log.joint("fixed Red policy: %s\n"%", ".join(map(str, thetaRed)))
+    #     thetaBlue_star = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+    #                                     max_iter=maxiters, loud=True, verbose=False)
+    #     evaluate_policy(log, T, thetaBlue_star, thetaRed, hitOdds, delta)
+    #     log.joint("\n")
 
-    # Optimize Blue and Red simultaneously
-    # step_count = 2  # Number of first-order steps each player can take during their training turn
-    # epoch_count = 500
-    # thetaBlue_hat, thetaRed_hat = np.zeros(len(thetaBlue)), np.zeros(len(thetaBlue))
-    # np.copyto(thetaBlue_hat, thetaBlue)
-    # np.copyto(thetaRed_hat, thetaRed)
-    # log.joint("Optimizing Blue and Red policies in tanget\n")
+    # log.joint("Optimizing Blue policy using %s\n"%optMethod2.__name__)
+    # for trial in range(1, n_trials+1):
+    #     log.joint("Trial %d\n"%trial)
+    #     log.joint("initial Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
+    #     log.joint("fixed Red policy: %s\n"%", ".join(map(str, thetaRed)))
+    #     thetaBlue_star = optimize_policy(log, "B", optMethod2, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+    #                                     max_iter=maxiters, loud=True, verbose=False)
+    #     evaluate_policy(log, T, thetaBlue_star, thetaRed, hitOdds, delta)
+    #     log.joint("\n")
+
+    # # Optimize Red policy on initial Blue policy
+    # log.joint("Optimizing Red policy using %s\n"%optMethod.__name__)
+    # for trial in range(1, n_trials+1):
+    #     log.joint("initial Red policy: %s\n"%", ".join(map(str, thetaRed)))
+    #     log.joint("fixed Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
+    #     thetaRed_star = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta, 
+    #                                     max_iter=maxiters, loud=True, verbose=False)
+    #     evaluate_policy(log, T, thetaBlue, thetaRed_star, hitOdds, delta)
+    #     log.joint("\n")
+
+    # log.joint("Optimizing Red policy using %s\n"%optMethod2.__name__)
+    # for trial in range(1, n_trials+1):
+    #     log.joint("initial Red policy: %s\n"%", ".join(map(str, thetaRed)))
+    #     log.joint("fixed Blue policy: %s\n"%", ".join(map(str, thetaBlue)))
+    #     thetaRed_star = optimize_policy(log, "R", optMethod2, params, T, thetaBlue, thetaRed, hitOdds, delta=delta, 
+    #                                     max_iter=maxiters, loud=True, verbose=False)
+    #     evaluate_policy(log, T, thetaBlue, thetaRed_star, hitOdds, delta)
+    #     log.joint("\n")
+
+    #Optimize Blue and Red simultaneously
+    step_count = 5  # Number of first-order steps each player can take during their training turn
+    epoch_count = 1000
+    thetaBlue_hat, thetaRed_hat = np.zeros(len(thetaBlue)), np.zeros(len(thetaBlue))
+
+    log.joint("Optimizing Blue and Red policies in tanget using %s\n"%optMethod2.__name__)
+    log.joint(f"each gets {step_count} steps per round, {epoch_count} rounds total\n")
+    for trial in range(1, n_trials+1):
+        log.joint("trail %d\n"%trial)
+        thetaBlue_random = thetaBlue #np.random.rand(len(thetaBlue))
+        thetaRed_random = thetaRed #np.random.rand(len(thetaRed))
+        log.joint("Initial policies:  ThetaBlue=%s  ThetaRed%s\n"%(arrayToString(thetaBlue_random), arrayToString(thetaRed_random)))
+        np.copyto(thetaBlue_hat, thetaBlue_random)
+        np.copyto(thetaRed_hat, thetaRed_random)
+        for epoch in range(1, epoch_count+1):
+            thetaBlue_hat = optimize_policy(log, "B", optMethod2, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+                                            max_iter=step_count, loud=False, verbose=False)
+            thetaRed_hat = optimize_policy(log, "R", optMethod2, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+                                            max_iter=step_count, loud=False, verbose=False)
+
+            if epoch % 250 == 0:
+                log.joint("After round %d:  ThetaBlue=(%s)  ThetaRed=(%s)\n"%(epoch, arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
+                avg_delivs, var_delivs, min_delivs, max_delivs = evaluate_policy(log, T, thetaBlue_hat, thetaRed_hat, hitOdds, delta)
+                VaR, CVaR = compute_VaR(alpha, avg_delivs, var_delivs, min_delivs, max_delivs)
+                log.joint("Game statistics\n")
+                log.joint("average reward:  %f\n"%(avg_delivs))
+                log.joint("variance reward: %f\n"%(var_delivs))
+                log.joint("min reward:      %f\n"%(min_delivs))
+                log.joint("max reward:      %f\n"%(max_delivs))
+                log.joint("VaR:             %f\n"%(VaR))
+                log.joint("CVaR:            %f\n"%(CVaR))
+                # log.joint("VaR_trunc:       %f\n"%(VaR_trunc))
+                # log.joint("CVaR_trunc:      %f\n"%(CVaR_trunc))
+                log.joint("\n")
+
+    # log.joint("Optimizing Blue and Red policies in tanget using %s\n"%optMethod2.__name__)
     # log.joint(f"each gets {step_count} steps per round, {epoch_count} rounds total\n")
     # log.joint("Initial policies:  ThetaBlue=%s  ThetaRed%s\n"%(arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
-    # for epoch in range(1, epoch_count+1):
-    #     thetaBlue_hat = optimize_policy(log, "B", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-    #                                     max_iter=step_count, loud=False, verbose=False)
-    #     thetaRed_hat = optimize_policy(log, "R", optMethod, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
-    #                                     max_iter=step_count, loud=False, verbose=False)
+    # for trial in range(1, n_trials+1):
+    #     log.joint("trail %d\n"%trial)
+    #     np.copyto(thetaBlue_hat, thetaBlue)
+    #     np.copyto(thetaRed_hat, thetaRed)
+    #     for epoch in range(1, epoch_count+1):
+    #         thetaBlue_hat = optimize_policy(log, "B", optMethod2, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+    #                                         max_iter=step_count, loud=False, verbose=False)
+    #         thetaRed_hat = optimize_policy(log, "R", optMethod2, params, T, thetaBlue, thetaRed, hitOdds, delta=delta,
+    #                                         max_iter=step_count, loud=False, verbose=False)
 
-    #     if epoch % 10 == 0:
-    #         log.joint("After round %d:  ThetaBlue=(%s)  ThetaRed=(%s)\n"%(epoch, arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
-    #         evaluate_policy(log, T, thetaBlue_hat, thetaRed_hat, hitOdds, delta)
+    #         if epoch % 100 == 0:
+    #             log.joint("After round %d:  ThetaBlue=(%s)  ThetaRed=(%s)\n"%(epoch, arrayToString(thetaBlue_hat), arrayToString(thetaRed_hat)))
+    #             evaluate_policy(log, T, thetaBlue_hat, thetaRed_hat, hitOdds, delta)
+    #     log.joint("\n")
+
+    # Counterfactual Analysis
+    n_tests = 10
+    log.joint("Blue policy (ThetaBlue) found after training: %s\n"%(arrayToString(thetaBlue_hat)))
+    log.joint("Running Counterfactual analysis on random Red policies\n")
+    for trial in range(n_tests):
+        log.joint("Trial %d\n"%(trial))
+        thetaRed_random = np.random.rand(len(thetaRed))
+        log.joint("Red Policy (ThetaRed): %s\n"%(arrayToString(thetaRed_random)))
+        evaluate_policy(log, T, thetaBlue_hat, thetaRed_random, hitOdds, delta, loud=True)

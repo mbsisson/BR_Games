@@ -6,12 +6,13 @@
 ###############################################################################
 
 import numpy as np
+from scipy.stats import norm
 #import matplotlib.pyplot as plt
-#from scipy.stats import truncnorm
+from scipy.stats import truncnorm
 from reinforce import sampleTrajectories_Blue
 
 
-def evaluate_policy(log, T, thetaBlue, thetaRed, hitOdds, delta=0.0, n_samples=500, loud=True):
+def evaluate_policy(log, T, thetaBlue, thetaRed, hitOdds, delta=0.0, n_samples=500, loud=False):
     '''
     Computes several statistics for the number of deliveries (Blue reward) of given policy using sample average.
     
@@ -56,6 +57,25 @@ def evaluate_policy(log, T, thetaBlue, thetaRed, hitOdds, delta=0.0, n_samples=5
 
     return avg_delivs, var_delivs, min_delivs, max_delivs
 
+def compute_VaR(alpha, mean, variance, d_min, d_max):
+    sigma = np.sqrt(variance)
+    z_alpha = norm.ppf(alpha)
+
+    # Without truncation
+    VaR = mean + sigma * z_alpha
+    CVaR = mean - sigma * norm.pdf(z_alpha) / alpha
+
+    # # With truncation
+    # a, b = (d_min - mean) / sigma, (d_max - mean) / sigma
+    # z_alpha_trunc = norm.ppf(norm.cdf(a) + alpha * (norm.cdf(b) - norm.cdf(a)))
+    # VaR_trunc = mean + sigma * z_alpha_trunc
+
+    # # Compute truncated CVaR (via numerical integration)
+    # xs = np.linspace(VaR_trunc, d_max, 10_000)
+    # pdf_trunc = norm.pdf((xs - mean) / sigma) / (sigma * (norm.cdf(b) - norm.cdf(a)))
+    # CVaR_trunc = np.trapz(xs * pdf_trunc, xs) / (1 - alpha)
+    
+    return VaR, CVaR #, VaR_trunc, CVaR_trunc
 
 # def compute_statistics(T, p, q, pR, qR, loud=True):
 #     '''
